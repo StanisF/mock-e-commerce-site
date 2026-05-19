@@ -3,14 +3,16 @@ import type { Product } from './types';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
 import { ProductList } from './components/ProductList';
+import { CartDrawer } from './components/CartDrawer';
 import { useProducts } from './hooks/useProducts';
-import { addToCart } from './api';
+import { useCart } from './hooks/useCart';
 import './App.css';
 
 export function App() {
   const { products, loading, error } = useProducts();
+  const cart = useCart();
   const [cartMessage, setCartMessage] = useState<string | null>(null);
-  const [cartItemCount, setCartItemCount] = useState(0);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -21,8 +23,7 @@ export function App() {
 
   async function handleAddToCart(product: Product) {
     try {
-      await addToCart({ productId: product.id, quantity: 1 });
-      setCartItemCount((prev) => prev + 1);
+      await cart.addItem(product.id, 1);
       setCartMessage(`"${product.name}" added to cart!`);
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setCartMessage(null), 3000);
@@ -33,7 +34,16 @@ export function App() {
 
   return (
     <div className="app">
-      <Header cartItemCount={cartItemCount} />
+      <Header cartItemCount={cart.totalItems} onCartClick={() => setIsCartOpen(true)} />
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        items={cart.items}
+        totalPrice={cart.totalPrice}
+        onUpdateQuantity={cart.updateQuantity}
+        onRemove={cart.removeItem}
+        onClear={cart.clearAll}
+      />
       <HeroBanner />
 
       <main className="app__main">
@@ -48,7 +58,7 @@ export function App() {
         {loading && <p className="app__loading">Loading products…</p>}
         {error && <p className="app__error">Error: {error}</p>}
         {!loading && !error && (
-          <ProductList products={products} onAddToCart={handleAddToCart} />
+          <ProductList products={products} onAddToCart={handleAddToCart} getItemQuantity={cart.getItemQuantity} />
         )}
       </main>
     </div>

@@ -8,6 +8,14 @@ export interface Product {
   imageUrl: string;
 }
 
+export interface CartItem {
+  productId: number;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  totalPrice: number;
+}
+
 export interface AddToCartRequest {
   productId: number;
   quantity: number;

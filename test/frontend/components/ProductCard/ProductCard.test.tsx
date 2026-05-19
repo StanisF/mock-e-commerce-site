@@ -42,6 +42,16 @@ describe('ProductCard', () => {
     expect(screen.getByRole('button', { name: /out of stock/i })).toBeDisabled();
   });
 
+  it('disables button when cartQuantity is 5', () => {
+    render(<ProductCard product={mockProduct} onAddToCart={() => {}} cartQuantity={5} />);
+    expect(screen.getByRole('button', { name: /max quantity reached/i })).toBeDisabled();
+  });
+
+  it('does not disable button when cartQuantity is below 5', () => {
+    render(<ProductCard product={mockProduct} onAddToCart={() => {}} cartQuantity={4} />);
+    expect(screen.getByRole('button', { name: /add test headphones to cart/i })).not.toBeDisabled();
+  });
+
   it('renders product description', () => {
     render(<ProductCard product={mockProduct} onAddToCart={() => {}} />);
     expect(screen.getByText('Great sound quality.')).toBeInTheDocument();

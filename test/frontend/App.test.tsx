@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '../../src/frontend/src/App';
-import type { Product } from '../../src/frontend/src/types';
+import type { Product, CartItem } from '../../src/frontend/src/types';
 
 const mockProducts: Product[] = [
   {
@@ -16,13 +16,29 @@ const mockProducts: Product[] = [
 ];
 
 vi.mock('../../src/frontend/src/hooks/useProducts');
-vi.mock('../../src/frontend/src/api');
+vi.mock('../../src/frontend/src/hooks/useCart');
 
 import { useProducts } from '../../src/frontend/src/hooks/useProducts';
-import { addToCart } from '../../src/frontend/src/api';
+import { useCart } from '../../src/frontend/src/hooks/useCart';
 
 const mockedUseProducts = vi.mocked(useProducts);
-const mockedAddToCart = vi.mocked(addToCart);
+const mockedUseCart = vi.mocked(useCart);
+
+function makeCart(overrides: Partial<ReturnType<typeof useCart>> = {}): ReturnType<typeof useCart> {
+  return {
+    items: [] as CartItem[],
+    loading: false,
+    error: null,
+    totalPrice: 0,
+    totalItems: 0,
+    addItem: vi.fn().mockResolvedValue(undefined),
+    updateQuantity: vi.fn().mockResolvedValue(undefined),
+    removeItem: vi.fn().mockResolvedValue(undefined),
+    clearAll: vi.fn().mockResolvedValue(undefined),
+    getItemQuantity: vi.fn().mockReturnValue(0),
+    ...overrides,
+  };
+}
 
 describe('App', () => {
   afterEach(() => {
@@ -31,6 +47,7 @@ describe('App', () => {
 
   it('renders the header with shop name', () => {
     mockedUseProducts.mockReturnValue({ products: [], loading: false, error: null });
+    mockedUseCart.mockReturnValue(makeCart());
 
     render(<App />);
 
@@ -39,6 +56,7 @@ describe('App', () => {
 
   it('renders the hero banner', () => {
     mockedUseProducts.mockReturnValue({ products: [], loading: false, error: null });
+    mockedUseCart.mockReturnValue(makeCart());
 
     render(<App />);
 
@@ -47,6 +65,7 @@ describe('App', () => {
 
   it('renders the products section heading', () => {
     mockedUseProducts.mockReturnValue({ products: [], loading: false, error: null });
+    mockedUseCart.mockReturnValue(makeCart());
 
     render(<App />);
 
@@ -55,6 +74,7 @@ describe('App', () => {
 
   it('shows loading state', () => {
     mockedUseProducts.mockReturnValue({ products: [], loading: true, error: null });
+    mockedUseCart.mockReturnValue(makeCart());
 
     render(<App />);
 
@@ -63,6 +83,7 @@ describe('App', () => {
 
   it('shows error state', () => {
     mockedUseProducts.mockReturnValue({ products: [], loading: false, error: 'Network error' });
+    mockedUseCart.mockReturnValue(makeCart());
 
     render(<App />);
 
@@ -71,6 +92,7 @@ describe('App', () => {
 
   it('renders product list when loaded', () => {
     mockedUseProducts.mockReturnValue({ products: mockProducts, loading: false, error: null });
+    mockedUseCart.mockReturnValue(makeCart());
 
     render(<App />);
 
@@ -79,13 +101,7 @@ describe('App', () => {
 
   it('shows notification after adding to cart', async () => {
     mockedUseProducts.mockReturnValue({ products: mockProducts, loading: false, error: null });
-    mockedAddToCart.mockResolvedValue({
-      productId: 1,
-      productName: 'Test Headphones',
-      unitPrice: 79.99,
-      quantity: 1,
-      totalPrice: 79.99,
-    });
+    mockedUseCart.mockReturnValue(makeCart());
 
     render(<App />);
     await userEvent.click(screen.getByRole('button', { name: /add test headphones to cart/i }));
@@ -95,11 +111,32 @@ describe('App', () => {
 
   it('shows error notification when add to cart fails', async () => {
     mockedUseProducts.mockReturnValue({ products: mockProducts, loading: false, error: null });
-    mockedAddToCart.mockRejectedValue(new Error('Server error'));
+    mockedUseCart.mockReturnValue(makeCart({
+      addItem: vi.fn().mockRejectedValue(new Error('Server error')),
+    }));
 
     render(<App />);
     await userEvent.click(screen.getByRole('button', { name: /add test headphones to cart/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Failed to add item to cart.');
+  });
+
+  it('cart badge reflects totalItems from useCart', () => {
+    mockedUseProducts.mockReturnValue({ products: [], loading: false, error: null });
+    mockedUseCart.mockReturnValue(makeCart({ totalItems: 4 }));
+
+    render(<App />);
+
+    expect(screen.getByRole('button', { name: /shopping cart with 4 items/i })).toBeInTheDocument();
+  });
+
+  it('opens cart drawer when cart button is clicked', async () => {
+    mockedUseProducts.mockReturnValue({ products: [], loading: false, error: null });
+    mockedUseCart.mockReturnValue(makeCart());
+
+    render(<App />);
+    await userEvent.click(screen.getByRole('button', { name: /shopping cart/i }));
+
+    expect(screen.getByRole('dialog', { name: /shopping cart/i })).toBeInTheDocument();
   });
 });

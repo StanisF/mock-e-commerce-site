@@ -25,19 +25,32 @@ const mockProducts: Product[] = [
 
 describe('ProductList', () => {
   it('renders all products', () => {
-    render(<ProductList products={mockProducts} onAddToCart={() => {}} />);
+    render(<ProductList products={mockProducts} onAddToCart={() => {}} getItemQuantity={() => 0} />);
     expect(screen.getByText('Headphones')).toBeInTheDocument();
     expect(screen.getByText('Running Shoes')).toBeInTheDocument();
   });
 
   it('shows empty message when no products', () => {
-    render(<ProductList products={[]} onAddToCart={() => {}} />);
+    render(<ProductList products={[]} onAddToCart={() => {}} getItemQuantity={() => 0} />);
     expect(screen.getByText(/no products available/i)).toBeInTheDocument();
   });
 
   it('renders a list with correct number of items', () => {
-    render(<ProductList products={mockProducts} onAddToCart={() => {}} />);
+    render(<ProductList products={mockProducts} onAddToCart={() => {}} getItemQuantity={() => 0} />);
     const list = screen.getByRole('list', { name: /product list/i });
     expect(list.children).toHaveLength(mockProducts.length);
+  });
+
+  it('forwards cartQuantity from getItemQuantity to ProductCard', () => {
+    // Product 1 has 5 in cart — its Add button should be disabled
+    render(
+      <ProductList
+        products={mockProducts}
+        onAddToCart={() => {}}
+        getItemQuantity={(id) => (id === 1 ? 5 : 0)}
+      />
+    );
+    expect(screen.getByRole('button', { name: /max quantity reached/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /add running shoes to cart/i })).not.toBeDisabled();
   });
 });

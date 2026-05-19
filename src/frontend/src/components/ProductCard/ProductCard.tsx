@@ -3,9 +3,11 @@ import type { Product } from '../../types';
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
+  cartQuantity?: number;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart, cartQuantity = 0 }: ProductCardProps) {
+  const isMaxQuantity = cartQuantity >= 5;
   return (
     <article className="product-card">
       <div className="product-card__image-wrapper">
@@ -29,10 +31,16 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           <button
             className="product-card__button"
             onClick={() => onAddToCart(product)}
-            disabled={product.stock === 0}
-            aria-label={product.stock === 0 ? 'Out of Stock' : `Add ${product.name} to cart`}
+            disabled={product.stock === 0 || isMaxQuantity}
+            aria-label={
+              product.stock === 0
+                ? 'Out of Stock'
+                : isMaxQuantity
+                ? 'Max quantity reached'
+                : `Add ${product.name} to cart`
+            }
           >
-            {product.stock === 0 ? '✕' : '+'}
+            {product.stock === 0 || isMaxQuantity ? '✕' : '+'}
           </button>
         </div>
       </div>
