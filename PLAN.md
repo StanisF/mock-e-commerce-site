@@ -48,7 +48,7 @@ Add: `public record UpdateCartItemRequest(int Quantity);`
 File: `src/backend/MockEcommerce.Api/Endpoints/CartEndpoints.cs`
 
 1. **GetCart** — call `cartService.GetAll()`, return `TypedResults.Ok(...)`
-2. **AddToCart** — validate quantity > 0; look up product (404 if missing); check max-qty rule (existing + requested ≤ 5, else ValidationProblem); create or update CartItem via service; return Created or Ok
+2. **AddToCart** — validate quantity > 0; look up product (404 if missing); if item already in cart, read its current quantity via `cartService.GetByProductId()` and verify `currentQty + requestedQty ≤ 5` **before** mutating — if it would exceed 5, return `422 ValidationProblem` and leave the existing quantity unchanged; only then call `cartService.Add()` to create or increment; return Created (new) or Ok (existing)
 3. **UpdateCartItem** (new handler) — validate quantity > 0 and ≤ 5; find item in cart (404 if missing); update quantity; return Ok
 4. **RemoveFromCart** — call `cartService.Remove(productId)`; return NoContent or NotFound
 5. **ClearCart** — call `cartService.Clear()`; return NoContent
@@ -71,7 +71,7 @@ Test cases:
 - POST /api/cart same product again → 200 with incremented qty
 - POST /api/cart with invalid product ID → 404
 - POST /api/cart with quantity 0 → 422
-- POST /api/cart exceeding max qty 5 → 422
+- POST /api/cart exceeding max qty 5 → 422, and verify the original quantity is preserved (GET the item again and assert qty unchanged)
 - PUT /api/cart/{id} with valid qty → 200
 - PUT /api/cart/{id} with qty > 5 → 422
 - PUT /api/cart/{id} for item not in cart → 404

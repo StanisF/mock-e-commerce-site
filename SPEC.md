@@ -42,13 +42,15 @@ Returns all items in the cart.
 Adds a product to the cart or increments its quantity.
 
 - **Request body**: `{ "productId": int, "quantity": int }`
-- **Validation**:
-  - `quantity` must be > 0 → else `422 ValidationProblem`
-  - `productId` must exist in the product catalog → else `404 NotFound` with message `"Product with ID {id} not found."`
-  - Resulting quantity (existing qty + requested qty) must be ≤ 5 → else `422 ValidationProblem` with message including the max limit
+- **Validation** (checked in this order):
+  1. `quantity` must be > 0 → else `422 ValidationProblem`
+  2. `productId` must exist in the product catalog → else `404 NotFound` with message `"Product with ID {id} not found."`
+  3. If the product is already in the cart, `existingItem.Quantity + request.Quantity` must be ≤ 5 → else `422 ValidationProblem`. **The existing cart item's quantity must be preserved unchanged** — do not increment first and roll back; validate before mutating.
 - **Success**:
   - New item: `201 Created` with `CartItem` and `Location: /api/cart` header
   - Existing item (quantity incremented): `200 OK` with updated `CartItem`
+
+> **Important**: The max-quantity check must happen *before* calling `cartService.Add()`. The endpoint reads the current quantity via `cartService.GetByProductId()`, computes the would-be total, and only proceeds to add if the total is ≤ 5. If validation fails the cart is not modified at all — the original quantity is preserved.
 
 #### PUT /api/cart/{productId}
 
