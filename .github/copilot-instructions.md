@@ -60,6 +60,20 @@ cd test/backend
 dotnet test
 ```
 
+## Product catalog
+
+`MockProductService` returns a fixed list of five products (IDs 1–5). These are the only products that exist — do not invent others when writing tests or validation logic.
+
+| ID | Name | Price | Category | Stock |
+|---|---|---|---|---|
+| 1 | Wireless Headphones | $79.99 | Electronics | 25 |
+| 2 | Running Shoes | $59.99 | Footwear | 40 |
+| 3 | Stainless Steel Water Bottle | $24.99 | Accessories | 100 |
+| 4 | Mechanical Keyboard | $109.99 | Electronics | 15 |
+| 5 | Yoga Mat | $34.99 | Sports | 60 |
+
+All images use `https://placehold.co/300x300?text=<name>` URLs.
+
 ## What is implemented vs. stubbed
 
 ### Implemented

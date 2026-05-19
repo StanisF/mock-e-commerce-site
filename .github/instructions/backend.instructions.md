@@ -25,6 +25,20 @@ src/backend/
         └── InMemoryCartService.cs # skeleton — all methods throw NotImplementedException
 ```
 
+## Hard-coded product catalog
+
+`MockProductService` returns a fixed static list — these are the **only** products that exist. Use real IDs and prices when writing tests or seeding data; do not invent fictional products.
+
+| ID | Name | Price | Category | Stock |
+|---|---|---|---|---|
+| 1 | Wireless Headphones | $79.99 | Electronics | 25 |
+| 2 | Running Shoes | $59.99 | Footwear | 40 |
+| 3 | Stainless Steel Water Bottle | $24.99 | Accessories | 100 |
+| 4 | Mechanical Keyboard | $109.99 | Electronics | 15 |
+| 5 | Yoga Mat | $34.99 | Sports | 60 |
+
+Product ID 9999 is a safe sentinel for "not found" tests (used in existing tests).
+
 ## Endpoint pattern
 
 Endpoints are grouped into static classes with an extension method on `WebApplication`. Each group uses `app.MapGroup(...)` to share a route prefix and OpenAPI tag.
